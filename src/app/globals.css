@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+/*
+ * Tema escuro do MyMoney. As cores de série dos gráficos vêm de uma paleta
+ * categórica validada para daltonismo contra este fundo (ordem fixa).
+ */
+@theme {
+  --color-bg: #0a0c11;
+  --color-surface: #12151c;
+  --color-surface-2: #181c25;
+  --color-surface-3: #212633;
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.12);
+
+  --color-ink: #eceef3;
+  --color-ink-2: #a3abbd;
+  --color-ink-3: #6f7789;
+
+  --color-brand: #34d399;
+  --color-brand-2: #22d3ee;
+  --color-pos: #4ade80;
+  --color-neg: #f87171;
+
+  /* status (reservado: ok / atenção / crítico / estourado) */
+  --color-good: #22c55e;
+  --color-warning: #fab219;
+  --color-serious: #ec835a;
+  --color-critical: #e5484d;
+
+  /* séries categóricas (ordem fixa) */
+  --color-series-1: #3987e5;
+  --color-series-2: #d95926;
+  --color-series-3: #199e70;
+  --color-series-4: #c98500;
+  --color-series-5: #d55181;
+  --color-series-6: #008300;
+  --color-series-7: #9085e9;
+  --color-series-8: #e66767;
+  --color-series-other: #5b6273;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-bg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgb(52 211 153 / 0.07), transparent 60%),
+    radial-gradient(900px 500px at 110% 0%, rgb(57 135 229 / 0.07), transparent 55%),
+    var(--color-bg);
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Valores monetários: alinhamento tabular e modo privacidade (borrar valores). */
+.money {
+  font-variant-numeric: tabular-nums;
+  transition: filter 0.25s ease;
+}
+:root[data-privacy="on"] .money {
+  filter: blur(7px);
+  user-select: none;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Barra de rolagem discreta em listas horizontais */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Recharts: sem contorno azul ao clicar */
+.recharts-wrapper *:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
