@@ -1,0 +1,39 @@
+{
+  "name": "my-money",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "setup:auth": "node scripts/setup-auth.mjs",
+    "check:pluggy": "node --env-file=.env.local scripts/pluggy-check.mjs",
+    "check:binance": "node --env-file=.env.local scripts/binance-check.mjs"
+  },
+  "dependencies": {
+    "jose": "^6.2.12",
+    "lucide-react": "^1.56.0",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20.9"
+  }
+}
