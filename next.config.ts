@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     balances: { stale: 60, revalidate: 5 * 60, expire: 60 * 60 }, // saldos Binance
     bank: { stale: 5 * 60, revalidate: 15 * 60, expire: 24 * 60 * 60 }, // Open Finance (atualiza ~1x/dia)
     quotes: { stale: 5 * 60, revalidate: 30 * 60, expire: 24 * 60 * 60 }, // brapi (30 min no plano grátis)
+    market: { stale: 60, revalidate: 5 * 60, expire: 60 * 60 }, // câmbio e candles de cripto
     reference: { stale: 60 * 60, revalidate: 12 * 60 * 60, expire: 7 * 24 * 60 * 60 }, // categorias, Selic
   },
 
