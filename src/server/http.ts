@@ -25,8 +25,19 @@ export async function fetchJson<T>(service: string, url: string, init: FetchJson
   try {
     res = await fetch(url, { ...rest, signal: AbortSignal.timeout(timeoutMs) });
   } catch (err) {
-    const reason = err instanceof Error && err.name === "TimeoutError" ? "tempo esgotado" : "falha de rede";
-    throw new UpstreamError(service, `${service}: ${reason}`);
+    if (err instanceof Error && err.name === "TimeoutError") {
+      throw new UpstreamError(service, `${service}: tempo esgotado (${Math.round(timeoutMs / 1000)} s)`);
+    }
+    // O fetch do Node guarda a causa real em err.cause (ex.: ENOTFOUND = DNS, ECONNRESET, certificado).
+    const cause = (err as { cause?: { code?: string; message?: string } })?.cause;
+    const detail = cause?.code ?? cause?.message;
+    const hint =
+      cause?.code === "ENOTFOUND"
+        ? " — o endereço não foi encontrado (DNS/sem internet)"
+        : /CERT|SSL|TLS|VERIFY|SIGNATURE|SELF_SIGNED/i.test(detail ?? "")
+          ? " — certificado não confiável: algum firewall/antivírus está inspecionando o HTTPS (comum em rede ou notebook corporativo)"
+          : "";
+    throw new UpstreamError(service, `${service}: falha de rede${detail ? ` (${detail})` : ""}${hint}`);
   }
 
   const text = await res.text();
@@ -39,7 +50,12 @@ export async function fetchJson<T>(service: string, url: string, init: FetchJson
 
   if (!res.ok) {
     const obj = (body ?? {}) as { msg?: string; message?: string; code?: string | number };
-    const msg = obj.msg ?? obj.message ?? (typeof body === "string" ? body.slice(0, 200) : res.statusText);
+    // Páginas de erro em HTML (ex.: 502 do Banco Central) viram uma mensagem curta.
+    const isHtml = typeof body === "string" && /^\s*</.test(body);
+    const msg =
+      obj.msg ??
+      obj.message ??
+      (isHtml ? "serviço temporariamente indisponível" : typeof body === "string" ? body.slice(0, 200) : res.statusText);
     throw new UpstreamError(service, `${service} (${res.status}): ${msg}`, res.status, obj.code);
   }
   return body as T;
