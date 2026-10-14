@@ -1,4 +1,4 @@
-import { AlertTriangle, CircleDot, Info } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 import type { DataSourceStatus, Sourced } from "@/domain/types";
 import { dateTimeBR } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -11,15 +11,15 @@ const LABEL: Record<DataSourceStatus, string> = {
   error: "Erro",
 };
 
-const TONE: Record<DataSourceStatus, string> = {
-  live: "text-brand bg-brand/10 border-brand/20",
-  demo: "text-series-7 bg-series-7/10 border-series-7/25",
-  fallback: "text-warning bg-warning/10 border-warning/20",
-  unconfigured: "text-ink-3 bg-surface-3 border-line",
-  error: "text-critical bg-critical/10 border-critical/25",
+const DOT: Record<DataSourceStatus, string> = {
+  live: "bg-good text-good/60 animate-pulse-dot",
+  demo: "bg-series-7 text-series-7/50",
+  fallback: "bg-warning text-warning/50",
+  unconfigured: "bg-ink-3 text-ink-3/50",
+  error: "bg-critical text-critical/50",
 };
 
-/** Selo "de onde veio este dado" — com horário da última busca no title. */
+/** Selo "de onde veio este dado", com o horário da última busca no title. */
 export function SourceBadge({
   sourced,
   label,
@@ -33,13 +33,9 @@ export function SourceBadge({
   return (
     <span
       title={`Atualizado em ${dateTimeBR(sourced.fetchedAt)}`}
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
-        TONE[sourced.source],
-        className,
-      )}
+      className={cn("inline-flex items-center gap-1.5 font-mono text-[10.5px] tracking-wide text-ink-3 uppercase", className)}
     >
-      <CircleDot className="size-3" aria-hidden />
+      <span aria-hidden className={cn("size-1.5 rounded-full", DOT[sourced.source])} />
       {label ?? LABEL[sourced.source]}
     </span>
   );
@@ -52,8 +48,8 @@ export function SourceNotes({ notes, tone = "info" }: { notes?: string[]; tone?:
   return (
     <ul
       className={cn(
-        "mt-3 space-y-1 rounded-xl border px-3 py-2 text-xs",
-        tone === "error" ? "border-critical/25 bg-critical/5 text-critical" : "border-line bg-surface-2 text-ink-3",
+        "mt-4 space-y-1 border-l-2 py-0.5 pl-3 text-xs",
+        tone === "error" ? "border-critical/60 text-critical" : "border-line-strong text-ink-3",
       )}
     >
       {notes.map((n) => (
@@ -70,7 +66,7 @@ export function SourceNotes({ notes, tone = "info" }: { notes?: string[]; tone?:
 export function Unavailable({ sourced, what }: { sourced: Sourced<unknown>; what: string }) {
   const isError = sourced.source === "error";
   return (
-    <div className="py-2">
+    <div className="py-1">
       <p className="text-sm text-ink-2">
         {isError ? `Não foi possível carregar ${what} agora.` : `Integração ainda não configurada para ${what}.`}
       </p>

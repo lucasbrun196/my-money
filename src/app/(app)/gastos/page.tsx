@@ -32,14 +32,15 @@ export default function GastosPage() {
   return (
     <>
       <PageHeader
+        kicker="Conta + cartão"
         title="Gastos"
-        description="Conta corrente + cartão, sem transferências entre contas próprias, aplicações e pagamento de fatura."
+        description="Tudo o que saiu da conta e do cartão. Transferências entre contas próprias, aplicações e pagamento de fatura ficam de fora."
       />
       <Suspense
         fallback={
           <div className="space-y-4">
-            <Skeleton className="h-36 w-full rounded-2xl" />
-            <div className="grid gap-4 lg:grid-cols-3">
+            <Skeleton className="h-36 w-full rounded-[14px]" />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <CardSkeleton chart className="lg:col-span-2" />
               <CardSkeleton chart />
             </div>

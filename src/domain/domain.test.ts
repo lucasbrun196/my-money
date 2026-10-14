@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { financeConfig } from "@/config/finance";
-import { billMonthForDate, inferCardCycle, inferForecastOffset, summarizeCard } from "./credit-card";
+import { billMonthForDate, billReferenceMonth, inferCardCycle, inferForecastOffset, summarizeCard } from "./credit-card";
+import { buildBillCycles, compareBills } from "./compare";
 import { averageCost, buildCryptoSnapshot } from "./crypto";
-import { fixedExpensesStatus } from "./fixed-expenses";
+import { summarizeReserves } from "./reserves";
+import { previousComparable } from "./periods";
 import { detectRecurring, matchRecurring } from "./recurring";
-import { currentFortnight, detectSalary, summarizeSalary } from "./salary";
-import { buildExpenses, fortnightBudget } from "./spending";
+import { detectSalary, summarizeSalary } from "./salary";
+import { buildExpenses } from "./spending";
 import type { CardBill, Transaction } from "./types";
 import { brl, pct, signedBrl } from "@/lib/format";
 
@@ -78,23 +79,8 @@ describe("salário detectado pelos dados", () => {
     ]);
   });
 
-  it("quinzena vai do último salário até o próximo previsto", () => {
-    const f = currentFortnight("2026-10-13", profile);
-    expect(f).toMatchObject({ start: "2026-10-06", nextExpected: "2026-10-19", partLabel: "Saldo", nextLabel: "Adiantamento", awaitingSalary: false });
-  });
-
   it("estima o próximo valor pelo último pagamento da mesma parte", () => {
     expect(summarizeSalary("2026-10-13", profile).next).toMatchObject({ label: "Adiantamento", estimatedAmount: 1800 });
-  });
-
-  it("sinaliza salário atrasado (Open Finance pode demorar 24h)", () => {
-    const f = currentFortnight("2026-10-20", profile);
-    expect(f.awaitingSalary).toBe(true);
-    expect(f.end).toBe("2026-10-21");
-  });
-
-  it("sem salário identificado, usa a quinzena do calendário", () => {
-    expect(currentFortnight("2026-10-13", null)).toMatchObject({ start: "2026-10-01", end: "2026-10-16", detected: false });
   });
 });
 
@@ -146,29 +132,20 @@ describe("gastos fixos detectados automaticamente", () => {
     expect(matchRecurring(small, recurring)).toBeUndefined();
     expect(matchRecurring(rent, recurring)?.method).toBe("pix");
   });
-
-  it("status do mês: PIX pago, assinatura do cartão ainda a lançar", () => {
-    const status = fixedExpensesStatus(recurring, txs, today, "2026-11", (t) => billMonthForDate(t.date, CYCLE));
-    expect(status.find((s) => s.method === "pix")).toMatchObject({ status: "pago", paidOn: "2026-10-07" });
-    expect(status.find((s) => s.method === "cartao")?.status).toBe("a-lancar");
-  });
 });
 
-describe("teto da quinzena", () => {
-  const txs: Transaction[] = [
-    tx({ date: "2026-10-07", amount: -100, description: "MERCADO" }),
-    tx({ date: "2026-10-08", amount: -300, source: "cartao", description: "LOJA PARC 01/03", installment: { number: 1, total: 3 } }),
-    tx({ date: "2026-10-08", amount: -300, source: "cartao", description: "OUTRA PARC 02/03", installment: { number: 2, total: 3 } }),
-    tx({ date: "2026-10-10", amount: -2000, description: "PAGAMENTO FATURA", kind: "card-payment" }),
-    tx({ date: "2026-10-11", amount: -1000, description: "TED MESMA TITULARIDADE", kind: "internal" }),
-  ];
-
-  it("ignora fatura e transferência própria; conta só a parcela 1 das compras parceladas", () => {
-    const expenses = buildExpenses(txs, []);
-    expect(expenses.map((e) => e.description)).not.toContain("PAGAMENTO FATURA");
-    const b = fortnightBudget(expenses, currentFortnight("2026-10-13", null), "2026-10-13", financeConfig.budget);
-    expect(b.spent).toBe(400);
-    expect(b.remaining).toBe(500);
+describe("gastos", () => {
+  it("ignora pagamento de fatura, transferência própria e entradas", () => {
+    const expenses = buildExpenses(
+      [
+        tx({ date: "2026-10-07", amount: -100, description: "MERCADO" }),
+        tx({ date: "2026-10-10", amount: -2000, description: "PAGAMENTO FATURA", kind: "card-payment" }),
+        tx({ date: "2026-10-11", amount: -1000, description: "TED MESMA TITULARIDADE", kind: "internal" }),
+        tx({ date: "2026-10-12", amount: 50, description: "PIX RECEBIDO" }),
+      ],
+      [],
+    );
+    expect(expenses.map((e) => [e.description, e.amount])).toEqual([["MERCADO", 100]]);
   });
 });
 
@@ -270,5 +247,95 @@ describe("preço médio cripto pelo histórico", () => {
   it("sem histórico, não inventa resultado", () => {
     const snap = buildCryptoSnapshot([{ asset: "SOL", spot: 1, earn: 0 }], { brl: { SOL: 1000 }, usd: { SOL: 190 }, usdBrl: 5.4 }, {});
     expect(snap.holdings[0]).toMatchObject({ avgPriceUsd: null, pnlUsd: null, pnlPct: null });
+  });
+});
+
+describe("comparação com o período anterior", () => {
+  it("corta o mês anterior no mesmo dia quando o atual está em andamento", () => {
+    expect(previousComparable("mes", "2026-10-13", "2026-10-13")).toEqual({ start: "2026-09-01", end: "2026-09-13", partial: true });
+  });
+  it("usa o período anterior inteiro quando o atual já terminou", () => {
+    expect(previousComparable("mes", "2026-09-10", "2026-10-13")).toEqual({ start: "2026-08-01", end: "2026-08-31", partial: false });
+  });
+  it("não passa do fim do período anterior (31 de março × fevereiro)", () => {
+    expect(previousComparable("mes", "2026-03-31", "2026-03-31").end).toBe("2026-02-28");
+  });
+});
+
+describe("minhas reservas", () => {
+  const pos = (id: string, value: number, connection: string, purchaseDate: string, invested: number | null = value) => ({
+    id,
+    name: "CDB Exemplo",
+    assetClass: "renda_fixa" as const,
+    quantity: null,
+    avgPrice: null,
+    currentPrice: null,
+    value,
+    invested,
+    priceSource: "demo" as const,
+    connection,
+    fixedIncome: { purchaseDate, rateLabel: "100% do CDI" },
+  });
+
+  it("lista só a renda fixa da conexão do banco, numerada pela data de aplicação", () => {
+    const r = summarizeReserves({
+      connection: "Banco A",
+      positions: [pos("b", 1, "Banco A", "2026-10-05"), pos("a", 1.02, "Banco A", "2026-09-28", 1), pos("x", 5000, "Corretora B", "2026-01-01")],
+    });
+    expect(r.items.map((i) => [i.id, i.label])).toEqual([
+      ["a", "Reserva 1"],
+      ["b", "Reserva 2"],
+    ]);
+    expect(r.total).toBe(2.02);
+    expect(r.profit).toBe(0.02);
+  });
+
+  it("inclui saldos reservados da conta com o nome do banco; sem custo, não inventa rendimento", () => {
+    const r = summarizeReserves({ connection: "Banco A", positions: [], reservedBalances: [{ name: "Caixinha", amount: 50 }] });
+    expect(r.items[0].label).toBe("Caixinha");
+    expect(r.profit).toBeNull();
+  });
+});
+
+describe("nome e comparação das faturas", () => {
+  it("o nome da fatura é o mês da maior parte do ciclo (como o banco chama)", () => {
+    expect(billReferenceMonth("2026-09-02")).toBe("2026-08"); // ciclo 04/08 a 02/09
+    expect(billReferenceMonth("2026-09-25")).toBe("2026-09"); // ciclo 26/08 a 25/09
+  });
+
+  const card = (date: string, amount: number) => tx({ date, amount, source: "cartao", description: "LOJA EXEMPLO" });
+  const cycles = buildBillCycles({
+    bills: [
+      { id: "b9", dueDate: "2026-09-10", closeDate: "2026-09-02", total: 300, minimumPayment: null },
+      { id: "b8", dueDate: "2026-08-10", closeDate: "2026-08-03", total: 999, minimumPayment: null },
+    ],
+    open: { key: "2026-10", closeDate: "2026-10-05", dueDate: "2026-10-10", total: 70 },
+    cycle: CYCLE,
+    transactions: [
+      card("2026-08-02", -999), // fatura anterior (fechou 03/08)
+      card("2026-08-05", -100),
+      card("2026-08-20", -250),
+      card("2026-08-21", 50), // estorno
+      card("2026-09-04", -30),
+      card("2026-09-20", -40),
+      tx({ date: "2026-09-06", amount: 300, source: "cartao", description: "PAGAMENTO DE FATURA", kind: "card-payment" }),
+    ],
+  });
+
+  it("monta os ciclos com o total do banco e o nome de referência", () => {
+    expect(cycles.map((c) => [c.key, c.ref, c.start, c.close, c.total, c.open])).toEqual([
+      ["2026-10", "2026-09", "2026-09-03", "2026-10-05", 70, true],
+      ["2026-09", "2026-08", "2026-08-04", "2026-09-02", 300, false],
+      ["2026-08", "2026-07", "2026-07-04", "2026-08-03", 999, false],
+    ]);
+    expect(cycles[1].count).toBe(2);
+    expect(cycles[1].perDay.reduce((s, v) => s + v, 0)).toBe(300);
+  });
+
+  it("fatura aberta × anterior compara até o mesmo dia do ciclo", () => {
+    const c = compareBills(cycles[0], cycles[1], "2026-09-20"); // 18º dia do ciclo aberto
+    expect(c.sameDay).toEqual({ day: 18, a: 70, b: 300 }); // 100 + 250 − 50 de estorno até 21/08
+    expect(c.a.cumulative[17]).toBe(70);
+    expect(c.a.cumulative[18]).toBeNull();
   });
 });

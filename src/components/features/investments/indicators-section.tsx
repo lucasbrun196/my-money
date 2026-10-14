@@ -1,4 +1,3 @@
-import { Activity } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getIndicatorsView } from "@/server/services/indicators";
 import { IndicatorsDashboard } from "./indicators-dashboard";
@@ -7,7 +6,7 @@ import { IndicatorsDashboard } from "./indicators-dashboard";
 export async function IndicatorsSection() {
   const { indicators, notes } = await getIndicatorsView();
   return (
-    <Card title="Indicadores" subtitle="Escolha um ativo ou indicador" icon={<Activity />}>
+    <Card title="Indicadores de mercado" subtitle="Toque num bloco para ver o gráfico e os números">
       <IndicatorsDashboard indicators={indicators} notes={notes} />
     </Card>
   );

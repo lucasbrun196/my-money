@@ -9,10 +9,10 @@ export const metadata: Metadata = { title: "Cripto" };
 export default function CriptoPage() {
   return (
     <>
-      <PageHeader title="Cripto" description="Binance: todos os ativos da conta (Spot + Earn), em R$ e US$." />
+      <PageHeader kicker="Binance" title="Cripto" description="Todos os ativos da conta (Spot + Earn), em R$ e US$." />
       <Suspense
         fallback={
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <CardSkeleton lines={2} className="lg:col-span-3" />
             <CardSkeleton lines={4} />
             <CardSkeleton lines={4} />

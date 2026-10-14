@@ -1,74 +1,64 @@
-import { Landmark } from "lucide-react";
-import { Donut } from "@/components/charts/donut";
+import { AllocationBar } from "@/components/charts/allocation-bar";
 import { AnimatedBRL } from "@/components/ui/animated-number";
 import { Card } from "@/components/ui/card";
 import { Money } from "@/components/ui/money";
 import { SourceBadge } from "@/components/ui/source-badge";
 import { ASSET_CLASS_LABEL } from "@/domain/portfolio";
 import { ASSET_CLASS_COLOR } from "@/lib/colors";
+import { cn } from "@/lib/cn";
 import { pctShort } from "@/lib/format";
 import { getNetWorthView } from "@/server/services/overview";
-import { worstSource } from "../shared";
+import { Insight, worstSource } from "../shared";
 
 export async function NetWorthSection({ className }: { className?: string }) {
   const { netWorth, sources, missing, fetchedAt } = await getNetWorthView();
   const source = worstSource(sources);
   const partial = missing.length > 0 && netWorth.total > 0;
-  const data = netWorth.byClass.map((c) => ({
-    name: ASSET_CLASS_LABEL[c.assetClass],
-    value: c.value,
-    color: ASSET_CLASS_COLOR[c.assetClass],
-  }));
+  const classes = [...netWorth.byClass].sort((a, b) => b.value - a.value);
+  const biggest = classes[0];
 
   return (
     <Card
-      title="Patrimônio total"
-      icon={<Landmark />}
+      className={cn("flex flex-col", className)}
       action={<SourceBadge sourced={{ source: partial ? "fallback" : source, fetchedAt }} label={partial ? "Parcial" : undefined} />}
-      className={className}
+      title="Patrimônio total"
+      subtitle={partial ? `Sem dados de: ${missing.join(", ")}` : "Conta, investimentos e cripto somados"}
     >
-      <div className="grid items-center gap-6 sm:grid-cols-[1fr_200px]">
-        <div>
-          <AnimatedBRL value={netWorth.total} className="text-3xl font-semibold tracking-tight sm:text-4xl" />
-          <p className="mt-1 text-xs text-ink-3">
-            {partial ? `Sem dados de: ${missing.join(", ")}` : "Conta + investimentos + cripto"}
-          </p>
-          <ul className="mt-5 space-y-3">
-            {netWorth.byClass.map((c) => (
-              <li key={c.assetClass}>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="flex items-center gap-2 text-ink-2">
-                    <span className="size-2.5 rounded-sm" style={{ background: ASSET_CLASS_COLOR[c.assetClass] }} />
-                    {ASSET_CLASS_LABEL[c.assetClass]}
-                  </span>
-                  <span className="flex items-baseline gap-2">
-                    <Money value={c.value} className="font-medium" />
-                    <span className="w-12 text-right text-xs text-ink-3 tabular-nums">{pctShort(c.weight)}</span>
-                  </span>
-                </div>
-                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-3">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-1000 starting:w-0"
-                    style={{ width: `${c.weight * 100}%`, background: ASSET_CLASS_COLOR[c.assetClass] }}
-                  />
-                </div>
+      <AnimatedBRL value={netWorth.total} className="text-[40px] font-semibold tracking-[-0.03em] sm:text-5xl" />
+
+      {classes.length > 0 && (
+        <div className="mt-6 flex flex-1 flex-col">
+          <div className="min-h-24 flex-1">
+            <AllocationBar
+              tall
+              segments={classes.map((c) => ({
+              key: c.assetClass,
+              label: ASSET_CLASS_LABEL[c.assetClass],
+              value: c.value,
+              color: ASSET_CLASS_COLOR[c.assetClass],
+            }))}
+            />
+          </div>
+          <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+            {classes.map((c) => (
+              <li key={c.assetClass} className="min-w-0">
+                <p className="flex items-center gap-1.5 text-xs text-ink-3">
+                  <span className="size-2 shrink-0 rounded-[2px]" style={{ background: ASSET_CLASS_COLOR[c.assetClass] }} />
+                  <span className="truncate">{ASSET_CLASS_LABEL[c.assetClass]}</span>
+                  <span className="tnum ml-auto font-mono text-[11px]">{pctShort(c.weight)}</span>
+                </p>
+                <Money value={c.value} className="mt-0.5 block text-[15px] font-medium" />
               </li>
             ))}
           </ul>
+          {biggest && classes.length > 1 && (
+            <Insight className="mt-5">
+              A maior fatia é <span className="text-ink">{ASSET_CLASS_LABEL[biggest.assetClass].toLowerCase()}</span>, com{" "}
+              <span className="text-ink">{pctShort(biggest.weight)}</span> do patrimônio.
+            </Insight>
+          )}
         </div>
-        {data.length > 0 && (
-          <Donut
-            data={data}
-            size={200}
-            center={
-              <>
-                <span className="text-[11px] text-ink-3">classes</span>
-                <span className="text-xl font-semibold">{data.length}</span>
-              </>
-            }
-          />
-        )}
-      </div>
+      )}
     </Card>
   );
 }

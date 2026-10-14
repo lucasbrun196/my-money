@@ -65,7 +65,7 @@ components (UI)  →  services  →  repositories (interfaces)  →  integration
                      domain (puro)    live | demo | history(noop → Firestore)
 ```
 
-- `domain/` não sabe de onde vêm os dados. Recebe `Transaction[]` e devolve quinzena, fatura etc., e é 100% testável.
+- `domain/` não sabe de onde vêm os dados. Recebe `Transaction[]` e devolve salário, fatura etc., e é 100% testável.
 - `repositories/index.ts` é **o único lugar** que escolhe a fonte (demo, live e, depois, Firestore).
 - Toda resposta vem num envelope `Sourced<T>` (`live`, `demo`, `fallback`, `unconfigured` ou `error`, mais avisos). A UI mostra um selo com a origem de cada dado.
 

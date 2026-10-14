@@ -1,23 +1,25 @@
 @import "tailwindcss";
 
 /*
- * Tema escuro do MyMoney. As cores de série dos gráficos vêm de uma paleta
- * categórica validada para daltonismo contra este fundo (ordem fixa).
+ * Tema do MyMoney: grafite quente, interface quase monocromática e cor só
+ * onde ela carrega informação (dados, status e resultado). As cores de série
+ * dos gráficos vêm de uma paleta categórica validada para daltonismo contra
+ * este fundo (ordem fixa).
  */
 @theme {
-  --color-bg: #0a0c11;
-  --color-surface: #12151c;
-  --color-surface-2: #181c25;
-  --color-surface-3: #212633;
-  --color-line: rgb(255 255 255 / 0.07);
-  --color-line-strong: rgb(255 255 255 / 0.12);
+  --color-bg: #0c0c0b;
+  --color-surface: #141412;
+  --color-surface-2: #1b1b18;
+  --color-surface-3: #25241f;
+  --color-line: rgb(255 248 230 / 0.07);
+  --color-line-strong: rgb(255 248 230 / 0.13);
 
-  --color-ink: #eceef3;
-  --color-ink-2: #a3abbd;
-  --color-ink-3: #6f7789;
+  --color-ink: #eeebe3;
+  --color-ink-2: #b2ada2;
+  --color-ink-3: #7a766c;
 
-  --color-brand: #34d399;
-  --color-brand-2: #22d3ee;
+  /* "brand" = destaque neutro da interface (abas, chips ativos, foco) */
+  --color-brand: #eeebe3;
   --color-pos: #4ade80;
   --color-neg: #f87171;
 
@@ -38,38 +40,74 @@
   --color-series-8: #e66767;
   --color-series-other: #5b6273;
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
-  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  --radius-panel: 14px;
 
-  @keyframes fade-up {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* "backwards": depois de terminar, a animação some e o card não vira uma camada
+     própria (isso faria os balões de outros cards abrirem por baixo dele). */
+  --animate-rise: rise 0.7s var(--ease-out-expo) backwards;
+  --animate-fade: fade 0.4s ease-out backwards;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 2.4s ease-out infinite;
+  --animate-pop: pop 0.22s var(--ease-out-expo) both;
+
+  @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(14px) scale(0.985);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
   @keyframes sheet-up {
     from {
       opacity: 0;
-      transform: translateY(24px);
+      transform: translateY(40px);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: none;
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
     }
   }
   @keyframes shimmer {
     from {
-      background-position: -200% 0;
+      background-position: 150% 0;
     }
     to {
-      background-position: 200% 0;
+      background-position: -50% 0;
+    }
+  }
+  @keyframes pulse-dot {
+    0% {
+      box-shadow: 0 0 0 0 currentColor;
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 6px transparent;
     }
   }
 }
@@ -84,32 +122,147 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 10% -10%, rgb(52 211 153 / 0.07), transparent 60%),
-    radial-gradient(900px 500px at 110% 0%, rgb(57 135 229 / 0.07), transparent 55%),
-    var(--color-bg);
-  background-attachment: fixed;
+  background-color: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-feature-settings: "ss02";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Valores monetários: alinhamento tabular e modo privacidade (borrar valores). */
+/* Granulação leve no fundo: tira o aspecto "chapado" do preto. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: rgb(238 235 227 / 0.22);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Números sempre tabulares: colunas de valores alinham sem esforço. */
+.tnum,
 .money {
   font-variant-numeric: tabular-nums;
-  transition: filter 0.25s ease;
+}
+
+/* Valores monetários: modo privacidade (borrar valores). */
+.money {
+  transition: filter 0.3s ease;
 }
 :root[data-privacy="on"] .money {
-  filter: blur(7px);
+  filter: blur(8px);
   user-select: none;
+}
+
+/* Rótulo pequeno em caixa alta, usado como "legenda" de seções. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/*
+ * Painel: superfície com borda fina. No desktop, um brilho segue o cursor
+ * pela borda (as variáveis --mx/--my vêm do <PanelGlow />).
+ */
+.panel {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-line);
+  background:
+    linear-gradient(180deg, rgb(255 248 230 / 0.018), transparent 120px),
+    var(--color-surface);
+  box-shadow:
+    0 1px 0 rgb(255 248 230 / 0.04) inset,
+    0 12px 32px -20px rgb(0 0 0 / 0.8);
+  transition: border-color 0.3s ease;
+}
+@media (hover: hover) {
+  .panel::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: radial-gradient(
+      260px circle at var(--mx, -999px) var(--my, -999px),
+      rgb(255 248 230 / 0.28),
+      transparent 70%
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .panel:hover::after {
+    opacity: 1;
+  }
+}
+
+/* Entrada em cascata dos filhos diretos (cards de uma grade). */
+.stagger > * {
+  animation: var(--animate-rise);
+}
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(7) { animation-delay: 360ms; }
+.stagger > *:nth-child(n + 8) { animation-delay: 420ms; }
+
+/* Odômetro: cada dígito é uma coluna 0–9 que rola até o valor. */
+.odo {
+  display: inline-flex;
+  align-items: baseline;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.odo-digit {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+  position: relative;
+}
+.odo-strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--d) * -1.1em));
+  transition: transform 1.1s var(--ease-out-expo);
+  transition-delay: calc(var(--i) * 35ms);
+}
+@starting-style {
+  .odo-strip {
+    transform: translateY(0);
+  }
+}
+.odo-strip > span {
+  height: 1.1em;
 }
 
 .skeleton {
   background: linear-gradient(
-    90deg,
-    var(--color-surface-2) 0%,
+    100deg,
+    var(--color-surface-2) 30%,
     var(--color-surface-3) 50%,
-    var(--color-surface-2) 100%
+    var(--color-surface-2) 70%
   );
   background-size: 200% 100%;
   animation: var(--animate-shimmer);
@@ -123,9 +276,19 @@ body {
   scrollbar-width: none;
 }
 
-/* Recharts: sem contorno azul ao clicar */
+/* Barra de rolagem fina nas listas internas dos painéis */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+
+/* Recharts: sem contorno ao clicar e transições suaves no hover das barras */
 .recharts-wrapper *:focus {
   outline: none;
+}
+.recharts-bar-rectangle path,
+.recharts-pie-sector path {
+  transition: opacity 0.25s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -133,6 +296,8 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }

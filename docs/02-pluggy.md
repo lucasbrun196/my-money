@@ -68,6 +68,5 @@ Base: `https://api.pluggy.ai`. Código em [src/server/integrations/pluggy/client
 ## 5. Limitações conhecidas
 
 - **Atraso de até 24 h:** transações via Open Finance podem levar um dia para aparecer. O Meu Pluggy sincroniza **1x por dia**. O botão ↻ do app busca o que já está na Pluggy, mas não força o banco a atualizar.
-- Quando o salário previsto não aparece no dia, o card do teto mostra *"ainda não apareceu — o Open Finance pode levar até 24h"* e mantém a quinzena anterior aberta.
 - O consentimento do Open Finance **expira** (no máximo 12 meses). Quando o status do item sair de `UPDATED`, o app mostra o aviso e você renova no meu.pluggy.ai.
 - O histórico disponível é de cerca de 12 meses. Para guardar mais tempo, veja [06-firebase.md](06-firebase.md).

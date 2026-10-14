@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { BalanceSection, CardMiniSection, SalarySection } from "@/components/features/overview/bank-cards";
-import { BudgetSection } from "@/components/features/overview/budget";
-import { FixedSection, GoalsSection } from "@/components/features/overview/goals-fixed";
+import { ReservesSection } from "@/components/features/overview/reserves";
 import { NetWorthSection } from "@/components/features/overview/net-worth";
 import { PageHeader } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/skeleton";
@@ -13,13 +12,10 @@ import { CardSkeleton } from "@/components/ui/skeleton";
 export default function OverviewPage() {
   return (
     <>
-      <PageHeader title="Visão geral" description="Patrimônio, teto de gastos, metas e compromissos do mês." />
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Suspense fallback={<CardSkeleton chart className="lg:col-span-2" />}>
-          <NetWorthSection className="lg:col-span-2" />
-        </Suspense>
-        <Suspense fallback={<CardSkeleton lines={4} />}>
-          <BudgetSection />
+      <PageHeader kicker="Início" title="Visão geral" description="Patrimônio, saldo, salário, fatura e reservas." />
+      <div className="stagger grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
+        <Suspense fallback={<CardSkeleton chart className="lg:col-span-3" />}>
+          <NetWorthSection className="lg:col-span-3" />
         </Suspense>
         <Suspense fallback={<CardSkeleton lines={2} />}>
           <BalanceSection />
@@ -30,11 +26,8 @@ export default function OverviewPage() {
         <Suspense fallback={<CardSkeleton lines={3} />}>
           <CardMiniSection />
         </Suspense>
-        <Suspense fallback={<CardSkeleton lines={3} className="lg:col-span-2" />}>
-          <GoalsSection className="lg:col-span-2" />
-        </Suspense>
-        <Suspense fallback={<CardSkeleton lines={4} />}>
-          <FixedSection />
+        <Suspense fallback={<CardSkeleton lines={3} className="lg:col-span-3" />}>
+          <ReservesSection className="lg:col-span-3" />
         </Suspense>
       </div>
     </>

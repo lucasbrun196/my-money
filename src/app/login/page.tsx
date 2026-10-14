@@ -8,17 +8,18 @@ export const metadata: Metadata = { title: "Entrar" };
 export default function LoginPage() {
   return (
     <main className="grid min-h-dvh place-items-center px-4">
-      <div className="w-full max-w-sm animate-fade-up">
-        <div className="mb-8 flex justify-center">
+      <div className="w-full max-w-[360px]">
+        <div className="mb-10 animate-rise">
           <Logo size="lg" />
         </div>
-        <div className="rounded-2xl border border-line bg-surface/80 p-6 backdrop-blur">
-          <h1 className="mb-1 text-lg font-semibold">Bem-vindo de volta</h1>
-          <p className="mb-6 text-sm text-ink-3">Painel pessoal. Digite sua senha para continuar.</p>
+        <div className="panel animate-rise p-6 [animation-delay:80ms]">
+          <h1 className="text-lg font-semibold tracking-tight">Entrar</h1>
+          <p className="mt-1 mb-6 text-sm text-ink-3">Painel pessoal. Digite sua senha para continuar.</p>
           <Suspense fallback={<div className="h-40" />}>
             <LoginForm />
           </Suspense>
         </div>
+        <p className="eyebrow mt-6 animate-fade text-center [animation-delay:300ms]">Acesso restrito</p>
       </div>
     </main>
   );

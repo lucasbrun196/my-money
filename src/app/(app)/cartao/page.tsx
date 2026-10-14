@@ -7,8 +7,8 @@ import {
   CurrentBillCard,
   CurrentBillItemsCard,
   InstallmentPlansCard,
-  NextBillCard,
 } from "@/components/features/card/card-sections";
+import { MonthCompareSection } from "@/components/features/card/month-compare-section";
 import { PageHeader } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { getBankingView } from "@/server/services/banking";
@@ -19,11 +19,11 @@ async function CardContent() {
   const view = await getBankingView();
   if (!view.hasData || !hasCard(view)) return <CardUnavailable view={view} />;
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="stagger grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
       <CurrentBillCard view={view} />
-      <NextBillCard view={view} />
-      <BillTrendCard view={view} />
       <InstallmentPlansCard view={view} />
+      <MonthCompareSection view={view} className="lg:col-span-3" />
+      <BillTrendCard view={view} />
       <CurrentBillItemsCard view={view} />
     </div>
   );
@@ -32,14 +32,13 @@ async function CardContent() {
 export default function CartaoPage() {
   return (
     <>
-      <PageHeader title="Cartão de crédito" description="Fatura aberta, previsão de fechamento, parcelas futuras e próximas faturas." />
+      <PageHeader kicker="Crédito" title="Cartão de crédito" description="Fatura aberta, previsão de fechamento, parcelamentos e comparação entre faturas." />
       <Suspense
         fallback={
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <CardSkeleton lines={4} className="lg:col-span-2" />
             <CardSkeleton lines={4} />
-            <CardSkeleton chart className="lg:col-span-2" />
-            <CardSkeleton lines={4} />
+            <CardSkeleton chart className="lg:col-span-3" />
           </div>
         }
       >

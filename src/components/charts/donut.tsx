@@ -1,64 +1,82 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Pie, PieChart, Tooltip } from "recharts";
+import { useState, type ReactNode } from "react";
+import { Pie, PieChart, Sector } from "recharts";
 import { brl, pctShort } from "@/lib/format";
 
 export type DonutDatum = { name: string; value: number; color: string };
 
-/** Rosca com rótulo central e tooltip ao passar o dedo/mouse. */
+/**
+ * Rosca interativa: ao passar o mouse (ou tocar) numa fatia, ela se destaca
+ * e o centro passa a mostrar nome, valor e participação dela. O destaque
+ * também pode ser controlado de fora (ex.: lista de categorias ao lado).
+ */
 export function Donut({
   data,
   center,
   size = 200,
+  active,
+  onActiveChange,
 }: {
   data: DonutDatum[];
   center?: ReactNode;
   size?: number;
+  active?: string | null;
+  onActiveChange?: (name: string | null) => void;
 }) {
+  const [inner, setInner] = useState<string | null>(null);
+  const current = active !== undefined ? active : inner;
+  const set = (name: string | null) => {
+    setInner(name);
+    onActiveChange?.(name);
+  };
+
   const total = data.reduce((s, d) => s + d.value, 0);
   const chartData = data.map((d) => ({ ...d, fill: d.color }));
+  const focused = data.find((d) => d.name === current);
 
   return (
-    <div className="relative mx-auto" style={{ width: "100%", maxWidth: size }}>
+    <div className="relative mx-auto" style={{ width: "100%", maxWidth: size }} onMouseLeave={() => set(null)}>
       <PieChart responsive style={{ width: "100%", aspectRatio: 1 }}>
         <Pie
           data={chartData}
           dataKey="value"
           nameKey="name"
-          innerRadius="70%"
-          outerRadius="100%"
-          paddingAngle={data.length > 1 ? 2 : 0}
-          cornerRadius={4}
-          stroke="var(--color-surface)"
-          strokeWidth={2}
-          animationDuration={900}
+          innerRadius="72%"
+          outerRadius="94%"
+          paddingAngle={data.length > 1 ? 1.5 : 0}
+          cornerRadius={3}
+          stroke="none"
+          startAngle={90}
+          endAngle={-270}
+          animationDuration={1100}
           animationEasing="ease-out"
-        />
-        <Tooltip
-          cursor={false}
-          content={({ active, payload }) => {
-            const p = payload?.[0];
-            if (!active || !p) return null;
-            const d = p.payload as DonutDatum;
+          onMouseEnter={(d) => set(String(d.name))}
+          onClick={(d) => set(current === String(d.name) ? null : String(d.name))}
+          shape={(props) => {
+            const on = props.name === current;
             return (
-              <div className="rounded-lg border border-line-strong bg-surface-2 px-3 py-2 text-xs shadow-xl">
-                <div className="flex items-center gap-2 text-ink-2">
-                  <span className="size-2 rounded-full" style={{ background: d.color }} />
-                  {d.name}
-                </div>
-                <div className="money mt-0.5 font-medium text-ink">{brl(d.value)}</div>
-                <div className="text-ink-3">{total > 0 ? pctShort(d.value / total) : "–"}</div>
-              </div>
+              <Sector
+                {...props}
+                outerRadius={on ? Number(props.outerRadius) + 6 : props.outerRadius}
+                opacity={current && !on ? 0.35 : 1}
+                style={{ transition: "opacity .25s ease", cursor: "pointer" }}
+              />
             );
           }}
         />
       </PieChart>
-      {center && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          {center}
-        </div>
-      )}
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-[18%] text-center">
+        {focused ? (
+          <div key={focused.name} className="animate-fade">
+            <span className="line-clamp-2 text-[11px] leading-tight text-ink-2">{focused.name}</span>
+            <span className="money mt-1 block text-sm font-semibold">{brl(focused.value)}</span>
+            <span className="tnum font-mono text-[11px] text-ink-3">{total > 0 ? pctShort(focused.value / total) : "–"}</span>
+          </div>
+        ) : (
+          center
+        )}
+      </div>
     </div>
   );
 }

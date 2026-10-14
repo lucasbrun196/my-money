@@ -45,7 +45,7 @@ export function PeriodSummary({ data, action }: { data: SummaryData; action?: Re
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 divide-x divide-line rounded-lg border border-line">
         <Stat label={data.totalLabel ?? "Total"} value={<span className="money">{brl(total)}</span>} wide />
         <Stat label="Lançamentos" value={data.items.length} />
         <Stat
@@ -57,7 +57,7 @@ export function PeriodSummary({ data, action }: { data: SummaryData; action?: Re
 
       {categories.length > 1 && (
         <section>
-          <h3 className="mb-2 text-xs font-medium text-ink-3">Por categoria</h3>
+          <h3 className="eyebrow mb-2.5">Por categoria</h3>
           <ul className="space-y-2">
             {categories.slice(0, 6).map(([cat, value]) => (
               <li key={cat}>
@@ -65,12 +65,12 @@ export function PeriodSummary({ data, action }: { data: SummaryData; action?: Re
                   <span className="truncate text-ink-2">{cat}</span>
                   <span className="shrink-0">
                     <span className="money">{brl(value)}</span>{" "}
-                    <span className="text-xs text-ink-3">{pctShort(catTotal ? value / catTotal : 0)}</span>
+                    <span className="tnum font-mono text-[11px] text-ink-3">{pctShort(catTotal ? value / catTotal : 0)}</span>
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-3">
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface-3">
                   <div
-                    className="h-full rounded-full bg-series-1 transition-[width] duration-700 starting:w-0"
+                    className="h-full rounded-full bg-ink-2 transition-[width] duration-700 ease-out-expo starting:w-0"
                     style={{ width: `${catTotal ? (value / catTotal) * 100 : 0}%` }}
                   />
                 </div>
@@ -81,7 +81,7 @@ export function PeriodSummary({ data, action }: { data: SummaryData; action?: Re
       )}
 
       <section>
-        <h3 className="mb-1 text-xs font-medium text-ink-3">Lançamentos</h3>
+        <h3 className="eyebrow mb-1">Lançamentos</h3>
         {sorted.length === 0 ? (
           <p className="py-4 text-sm text-ink-3">Nenhum lançamento.</p>
         ) : (
@@ -114,9 +114,9 @@ export function PeriodSummary({ data, action }: { data: SummaryData; action?: Re
 
 function Stat({ label, value, hint, wide }: { label: string; value: ReactNode; hint?: string; wide?: boolean }) {
   return (
-    <div className="min-w-0 rounded-xl bg-surface-2 p-3">
-      <p className="truncate text-[11px] text-ink-3">{label}</p>
-      <p className={`truncate font-semibold ${wide ? "text-base" : "text-sm"}`}>{value}</p>
+    <div className="min-w-0 p-3">
+      <p className="eyebrow truncate">{label}</p>
+      <p className={`mt-1 truncate font-semibold tracking-tight ${wide ? "text-base" : "text-sm"}`}>{value}</p>
       {hint && <p className="truncate text-[11px] text-ink-3" title={hint}>{hint}</p>}
     </div>
   );

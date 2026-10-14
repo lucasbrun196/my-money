@@ -173,7 +173,9 @@ export function demoPositions(): InvestmentPosition[] {
     institution: "Corretora (demo)",
   });
   return [
-    { id: "demo-selic", name: "Tesouro Selic 2030", assetClass: "renda_fixa", quantity: null, avgPrice: null, currentPrice: null, value: 11240.5, invested: 10500, priceSource: "demo", institution: "Corretora (demo)" },
+    { id: "demo-selic", name: "Tesouro Selic 2030", assetClass: "renda_fixa", quantity: null, avgPrice: null, currentPrice: null, value: 11240.5, invested: 10500, priceSource: "demo", institution: "Corretora (demo)", connection: "XP" },
+    { id: "demo-reserva-1", name: "CDB Banco Exemplo", assetClass: "renda_fixa", quantity: null, avgPrice: null, currentPrice: null, value: 2500, invested: 2400, priceSource: "demo", institution: "Banco (demo)", connection: "Santander", fixedIncome: { purchaseDate: "2026-02-10", dueDate: "2030-02-10", liquidFrom: "2026-02-11", rateLabel: "100% do CDI" } },
+    { id: "demo-reserva-2", name: "CDB Banco Exemplo", assetClass: "renda_fixa", quantity: null, avgPrice: null, currentPrice: null, value: 1200, invested: 1180, priceSource: "demo", institution: "Banco (demo)", connection: "Santander", fixedIncome: { purchaseDate: "2026-07-01", dueDate: "2030-07-01", liquidFrom: "2026-07-02", rateLabel: "100% do CDI" } },
     stock("ABCD3", 150, 18.4, 21.3),
     stock("EFGH4", 200, 31.2, 29.75),
     stock("IJKL3", 90, 12.6, 15.1),

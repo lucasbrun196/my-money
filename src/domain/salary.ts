@@ -1,4 +1,4 @@
-import { addDays, addMonths, clampedDate, diffDays, endOfMonth, monthOf, parts } from "@/lib/dates";
+import { addMonths, clampedDate, diffDays, monthOf, parts } from "@/lib/dates";
 import type { ISODate, Transaction } from "./types";
 
 /**
@@ -127,22 +127,6 @@ export function detectSalary(transactions: Transaction[], today: ISODate): Salar
   };
 }
 
-export type Fortnight = {
-  start: ISODate;
-  /** Data esperada do próximo salário (fim exclusivo da quinzena). */
-  nextExpected: ISODate;
-  /** Fim exclusivo efetivo (se o salário atrasar, a quinzena "estica" até hoje). */
-  end: ISODate;
-  partLabel: string;
-  nextLabel: string;
-  /** true quando o início veio de um crédito real. */
-  detected: boolean;
-  /** O próximo salário já deveria ter caído mas ainda não apareceu (Open Finance pode atrasar ~24h). */
-  awaitingSalary: boolean;
-  daysLeft: number;
-  totalDays: number;
-};
-
 /** Próxima data de pagamento depois de `date`, pelos dias aprendidos. */
 function nextPaymentAfter(date: ISODate, profile: SalaryProfile): { date: ISODate; part: SalaryPart } {
   const { y, m } = parts(date);
@@ -155,43 +139,6 @@ function nextPaymentAfter(date: ISODate, profile: SalaryProfile): { date: ISODat
   );
   // Margem de 5 dias: um pagamento adiantado não faz "pular" a próxima data.
   return options.filter((o) => diffDays(date, o.date) > 5).sort((a, b) => (a.date < b.date ? -1 : 1))[0];
-}
-
-export function currentFortnight(today: ISODate, profile: SalaryProfile | null): Fortnight {
-  const last = profile?.payments.find((p) => p.date <= today && diffDays(p.date, today) <= 40);
-
-  if (!profile || !last) {
-    // Sem salário identificado: usa a metade do mês (1–15 / 16–fim) como período.
-    const { y, m, d } = parts(today);
-    const start = d <= 15 ? clampedDate(y, m, 1) : clampedDate(y, m, 16);
-    const end = d <= 15 ? clampedDate(y, m, 16) : addDays(endOfMonth(today), 1);
-    return {
-      start,
-      nextExpected: end,
-      end,
-      partLabel: "quinzena do calendário",
-      nextLabel: "próxima quinzena",
-      detected: false,
-      awaitingSalary: false,
-      daysLeft: Math.max(diffDays(today, end), 0),
-      totalDays: Math.max(diffDays(start, end), 1),
-    };
-  }
-
-  const next = nextPaymentAfter(last.date, profile);
-  const awaitingSalary = today >= next.date;
-  const end = awaitingSalary ? addDays(today, 1) : next.date;
-  return {
-    start: last.date,
-    nextExpected: next.date,
-    end,
-    partLabel: last.part.label,
-    nextLabel: next.part.label,
-    detected: true,
-    awaitingSalary,
-    daysLeft: Math.max(diffDays(today, next.date), 0),
-    totalDays: Math.max(diffDays(last.date, end), 1),
-  };
 }
 
 export type SalarySummary = {
