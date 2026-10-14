@@ -1,11 +1,10 @@
 import "server-only";
 import { cache } from "react";
 import { financeConfig } from "@/config/finance";
-import { inferCardCycle, resolveBillMonth, summarizeCard } from "@/domain/credit-card";
-import { fixedExpensesStatus, monthlyFixedTotal } from "@/domain/fixed-expenses";
+import { inferCardCycle, summarizeCard } from "@/domain/credit-card";
 import { detectRecurring } from "@/domain/recurring";
-import { currentFortnight, detectSalary, summarizeSalary } from "@/domain/salary";
-import { buildExpenses, fortnightBudget } from "@/domain/spending";
+import { detectSalary, summarizeSalary } from "@/domain/salary";
+import { buildExpenses } from "@/domain/spending";
 import { getBankData, getToday } from "./data";
 
 /**
@@ -20,8 +19,6 @@ export const getBankingView = cache(async () => {
   const recurring = detectRecurring(transactions, today);
   const expenses = buildExpenses(transactions, recurring);
   const salaryProfile = detectSalary(transactions, today);
-  const fortnight = currentFortnight(today, salaryProfile);
-  const budget = fortnightBudget(expenses, fortnight, today, financeConfig.budget);
   const salary = summarizeSalary(today, salaryProfile);
 
   const cycle = inferCardCycle(bills, card);
@@ -36,13 +33,6 @@ export const getBankingView = cache(async () => {
         card,
       })
     : null;
-  const fixed = fixedExpensesStatus(
-    recurring,
-    transactions,
-    today,
-    cardSummary?.currentMonth ?? "",
-    (t) => (cycle ? resolveBillMonth(t, cycle) : ""),
-  );
 
   return {
     sourced,
@@ -51,15 +41,11 @@ export const getBankingView = cache(async () => {
     checking,
     expenses,
     recurring,
-    fortnight,
-    budget,
     salary,
     cycle,
     card: cardSummary,
     cardInfo: card,
     bills,
-    fixed,
-    fixedMonthlyTotal: monthlyFixedTotal(recurring),
   };
 });
 

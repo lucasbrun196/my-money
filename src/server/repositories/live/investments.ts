@@ -19,7 +19,7 @@ async function cachedPositions(itemId: string, fallbackInstitution: string): Pro
     // Sem "valor investido" informado: calcula pelo histórico de compras/vendas.
     const history = i.amountOriginal == null ? await pluggy.getInvestmentTransactions(i.id).catch(() => []) : undefined;
     const p = mapInvestment(i, fallbackInstitution, history);
-    if (p) out.push(p);
+    if (p) out.push({ ...p, connection: fallbackInstitution });
   }
   return out;
 }

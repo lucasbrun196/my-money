@@ -236,6 +236,20 @@ function investmentName(i: PluggyInvestment): string {
   return i.name.replace(/\s+CIA RL$/i, "").trim();
 }
 
+/** Data do Open Finance ("2026-09-28T03:00:00.000Z") no fuso de SP, ou undefined. */
+const spDate = (v: string | null | undefined) => (v ? toSPDate(v) : undefined);
+
+/** Remuneração legível: 100 + "CDI" → "100% do CDI"; "PRE" → "12,5% a.a."; "IPCA" → "IPCA + 6% a.a.". */
+export function rateLabel(i: Pick<PluggyInvestment, "rate" | "rateType" | "fixedAnnualRate">): string | undefined {
+  const n = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+  const type = i.rateType?.toUpperCase();
+  const fixed = i.fixedAnnualRate ? ` + ${n(i.fixedAnnualRate)}% a.a.` : "";
+  if ((type === "CDI" || type === "SELIC") && i.rate) return `${n(i.rate)}% do ${type}${fixed}`;
+  if (type === "IPCA" || type === "IGPM") return `${type}${fixed || (i.rate ? ` + ${n(i.rate)}% a.a.` : "")}`;
+  if (type === "PRE" && (i.fixedAnnualRate ?? i.rate)) return `${n((i.fixedAnnualRate || i.rate)!)}% a.a.`;
+  return undefined;
+}
+
 /** Custo médio pelas movimentações de compra/venda (método do custo médio). */
 export function costFromTransactions(txs: PluggyInvestmentTransaction[]): { qty: number; cost: number } {
   let qty = 0;
@@ -288,5 +302,14 @@ export function mapInvestment(
     costCoverage,
     priceSource: "pluggy",
     updatedAt: i.date ?? undefined,
+    fixedIncome:
+      i.type === "FIXED_INCOME"
+        ? {
+            purchaseDate: spDate(i.purchaseDate ?? i.issueDate),
+            dueDate: spDate(i.dueDate),
+            liquidFrom: spDate(i.gracePeriodDate),
+            rateLabel: rateLabel(i),
+          }
+        : undefined,
   };
 }

@@ -4,7 +4,7 @@ Painel pessoal de finanças: gastos do Santander, fatura do cartão, salário, i
 
 | Tela | O que mostra |
 |---|---|
-| **Início** | Patrimônio total por classe, teto da quinzena (R$ 900) com alerta, saldo, salário, fatura, metas e gastos fixos |
+| **Início** | Patrimônio total por classe, saldo, salário, fatura e reservas do Santander |
 | **Gastos** | Filtro por dia, semana, mês e ano; conta e/ou cartão; só gastos variáveis; categorias com gráfico |
 | **Cartão** | Fatura aberta, previsão de fechamento, meta da anuidade (R$ 2.000), limite, próximas faturas, parcelamentos |
 | **Investir** | Open Finance (XP/Santander): valor atual, preço médio, resultado em R$ e %, peso de cada ativo |
@@ -19,7 +19,7 @@ Painel pessoal de finanças: gastos do Santander, fatura do cartão, salário, i
 | Estilo | **Tailwind CSS 4** | Tokens de tema escuro em CSS, sem runtime e com bundle pequeno. |
 | Gráficos | **Recharts 3** | Gráficos declarativos em React, com animação e tooltip. A paleta foi validada para daltonismo. |
 | Auth | Senha única (hash **scrypt**) + cookie JWT (**jose**) | Um único usuário, sem banco de dados e sem serviço externo. |
-| Testes | **Vitest** | Testa a lógica de negócio (quinzena, fatura, parcelas). |
+| Testes | **Vitest** | Testa a lógica de negócio (salário, fatura, parcelas). |
 
 **Por que não NestJS ou Flutter?** O NestJS precisaria de um servidor sempre ligado: no plano grátis do Render ele dorme e leva cerca de 50 s para acordar, e no Fly/Railway é pago. Seriam dois deploys para manter. O Flutter Web carrega um bundle pesado (CanvasKit), que abre devagar no navegador do celular, e mesmo assim precisaria de um backend para guardar os secrets. Para quem já sabe TypeScript, o Next resolve as duas coisas em um projeto só. A organização em `domain/`, `repositories/` e `services/` lembra a do NestJS.
 
@@ -77,9 +77,9 @@ my-money/
 │   │   ├── login/                # tela de login + action com rate limit
 │   │   ├── layout.tsx  globals.css  manifest.ts  robots.ts  icon.svg
 │   ├── proxy.ts                  # bloqueia tudo sem sessão (antigo middleware)
-│   ├── config/finance.ts         # só preferências: teto, metas, meta da anuidade, cripto a ignorar
+│   ├── config/finance.ts         # só preferências: meta da anuidade, cripto a ignorar
 │   ├── domain/                   # lógica pura e testável (sem I/O)
-│   │   ├── salary.ts  spending.ts  credit-card.ts  portfolio.ts  goals.ts ...
+│   │   ├── salary.ts  spending.ts  credit-card.ts  portfolio.ts  reserves.ts ...
 │   │   └── domain.test.ts
 │   ├── server/                   # só roda no servidor ("server-only")
 │   │   ├── env.ts  http.ts  cache-tags.ts

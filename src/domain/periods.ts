@@ -2,6 +2,7 @@
 import {
   addDays,
   addMonths,
+  diffDays,
   endOfMonth,
   fromParts,
   monthOf,
@@ -71,4 +72,21 @@ export function buckets(range: PeriodRange): { key: string; label: string; start
     out.push({ key: d, label: String(parts(d).d), start: d, end: d });
   }
   return out;
+}
+
+/**
+ * Período anterior comparável. Se o período atual ainda está em andamento,
+ * o anterior é cortado no mesmo ponto (mesmo número de dias decorridos),
+ * para não comparar um mês pela metade com um mês inteiro.
+ */
+export function previousComparable(
+  kind: PeriodKind,
+  anchor: ISODate,
+  today: ISODate,
+): { start: ISODate; end: ISODate; partial: boolean } {
+  const cur = periodRange(kind, anchor);
+  const prev = periodRange(kind, shiftAnchor(kind, anchor, -1));
+  if (kind === "dia" || cur.end < today) return { start: prev.start, end: prev.end, partial: false };
+  const end = addDays(prev.start, Math.max(diffDays(cur.start, today), 0));
+  return { start: prev.start, end: end < prev.end ? end : prev.end, partial: true };
 }

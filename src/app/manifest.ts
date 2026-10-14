@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Painel pessoal de finanças",
     start_url: "/",
     display: "standalone",
-    background_color: "#0a0c11",
-    theme_color: "#0a0c11",
+    background_color: "#0c0c0b",
+    theme_color: "#0c0c0b",
     lang: "pt-BR",
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
   };

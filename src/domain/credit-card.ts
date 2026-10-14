@@ -1,4 +1,4 @@
-import { addMonths, clampedDate, diffDays, monthDiff, monthOf, parts } from "@/lib/dates";
+import { addDays, addMonths, clampedDate, diffDays, monthDiff, monthOf, parts } from "@/lib/dates";
 import { matchRecurring, type RecurringExpense } from "./recurring";
 import { round2 } from "./spending";
 import type { CardBill, CreditCard, ISODate, Transaction, YearMonth } from "./types";
@@ -44,6 +44,21 @@ export function billDates(
   const [y, m] = month.split("-").map(Number);
   const closeMonth = card.dueDay > card.closingDay ? m : m - 1;
   return { closeDate: clampedDate(y, closeMonth, card.closingDay), dueDate: clampedDate(y, m, card.dueDay) };
+}
+
+/**
+ * Mês de referência da fatura, o nome que o banco usa: o mês em que cai a
+ * maior parte do ciclo (o meio dele, ~15 dias antes do fechamento). Ex.:
+ * fechamento em 02/09 (ciclo 04/08 a 02/09) → "agosto"; fechamento em 25/09 → "setembro".
+ * Internamente as faturas continuam identificadas pelo mês do vencimento.
+ */
+export function billReferenceMonth(closeDate: ISODate): YearMonth {
+  return monthOf(addDays(closeDate, -15));
+}
+
+/** Referência de uma fatura identificada pelo mês do vencimento (fechamento estimado pelo ciclo). */
+export function billReference(dueMonth: YearMonth, card: CardCycle): YearMonth {
+  return billReferenceMonth(billDates(dueMonth, card).closeDate);
 }
 
 /** Mês da fatura de uma transação do cartão, usando o dado do banco quando existir. */

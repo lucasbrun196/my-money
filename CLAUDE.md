@@ -19,7 +19,7 @@ O dono do projeto pediu explicitamente: **tudo deve vir das APIs ou ser deduzido
 - lista de gastos fixos, dia de fechamento ou vencimento do cartão;
 - **nomes de pessoas ou empresas** (o repositório é **público**).
 
-O que **pode** ficar no código são as **preferências** do usuário, que nenhuma API conhece. Elas ficam só em [src/config/finance.ts](src/config/finance.ts): teto de gastos da quinzena, metas, meta de gasto para isenção da anuidade e ativos de cripto a ignorar.
+O que **pode** ficar no código são as **preferências** do usuário, que nenhuma API conhece. Elas ficam só em [src/config/finance.ts](src/config/finance.ts): meta de gasto para isenção da anuidade e ativos de cripto a ignorar. O dono pediu **nenhum alvo fixo** para reservas (o painel lista o que vem do banco) e **removeu o teto da quinzena**: não recrie sem pedido.
 
 Testes e modo demo usam **dados inventados e genéricos** ("Empresa Exemplo", "Fulana de Tal", tickers fictícios como `ABCD3`). Nunca copie dados reais do usuário para fixtures.
 
@@ -72,9 +72,9 @@ Ficam em `.env.local` (ignorado pelo git) e na Vercel. O modelo está em [.env.e
 src/
 ├── app/                      rotas (App Router)
 │   ├── (app)/                área logada: layout com nav (inferior no celular, lateral no desktop)
-│   │   ├── page.tsx          Início (patrimônio, teto da quinzena, saldo, salário, fatura, metas, fixos)
+│   │   ├── page.tsx          Início (patrimônio, saldo, salário, fatura, reservas)
 │   │   ├── gastos/           explorador de gastos (dia/semana/mês/ano, filtros, categorias)
-│   │   ├── cartao/           fatura aberta, prévia, evolução (linha), parcelamentos, lançamentos
+│   │   ├── cartao/           fatura aberta, parcelamentos, comparar faturas, evolução (linha), lançamentos
 │   │   ├── investimentos/    painel de indicadores + carteira
 │   │   ├── cripto/           Binance
 │   │   └── actions.ts        Server Actions: refreshData (updateTag + refresh), logout
@@ -155,16 +155,18 @@ O usuário pediu: **ao adicionar uma API nova, avise e explique** (custo, chave,
 ## 8. Regras de negócio (resumo)
 
 - **Salário** ([src/domain/salary.ts](src/domain/salary.ts)): o empregador é o pagador com a **maior renda recorrente mensal** (agrupado pelo nome, sem números, porque o CNPJ varia no texto). As partes são o agrupamento dos dias de pagamento (maior "buraco"; dois centros ≥ 8 dias de distância e cada parte com ≥ 25% dos pagamentos). A parte maior é o "Saldo" e a menor o "Adiantamento". O próximo valor é o último da mesma parte.
-- **Quinzena / teto** ([src/domain/spending.ts](src/domain/spending.ts)): do último salário até o próximo previsto. Contam **só gastos variáveis**: ficam de fora os gastos fixos detectados, o pagamento de fatura, as transferências próprias e as aplicações. Das compras parceladas, conta só a parcela 1. Status por cor: <70% ok, até 90% atenção, até 100% perto do limite, acima disso estourado.
-- **Gastos fixos** ([src/domain/recurring.ts](src/domain/recurring.ts)): mesma origem + valor parecido (±12%) + perto do mesmo dia (±5) + ~1 por mês + ≥ 3 meses (ou 2 meses seguidos com valor quase idêntico = "recente") + ativo nos últimos 45 dias.
+- **Nome da fatura** ([src/domain/credit-card.ts](src/domain/credit-card.ts), `billReferenceMonth`): como o banco chama, pelo mês da maior parte do ciclo (~15 dias antes do fechamento). Fechamento em 02/09 → "agosto". Internamente a fatura continua identificada pelo **mês do vencimento** (`currentMonth`, `resolveBillMonth`); só os rótulos usam a referência.
+- **Comparar faturas** ([src/domain/compare.ts](src/domain/compare.ts)), na tela Cartão: fatura com fatura, pelo **total cobrado pelo banco** (a aberta, parcial). O gráfico é o acumulado por dia do ciclo; com a fatura aberta, compara até o mesmo dia do ciclo. O Open Finance só entrega ~12 meses, então as faturas mais antigas podem ter lançamentos somando menos que o total (o painel avisa).
+- **Gastos** ([src/domain/spending.ts](src/domain/spending.ts)): saídas reais de dinheiro (débito, PIX e cartão). Ficam de fora o pagamento de fatura, as transferências próprias e as aplicações.
+- **Gastos fixos** ([src/domain/recurring.ts](src/domain/recurring.ts)), sem card próprio (o dono pediu para tirar do Início), mas usados no filtro "Só variáveis" e na previsão da fatura: mesma origem + valor parecido (±12%) + perto do mesmo dia (±5) + ~1 por mês + ≥ 3 meses (ou 2 meses seguidos com valor quase idêntico = "recente") + ativo nos últimos 45 dias.
 - **Fatura** ([src/domain/credit-card.ts](src/domain/credit-card.ts)): parcial da fatura aberta, previsão de fechamento (inclui assinaturas detectadas e parcelas ainda não lançadas) e próximas faturas projetadas.
-- **Metas** ([src/domain/goals.ts](src/domain/goals.ts)): caixinha (saldo reservado com o nome configurado), reserva (soma da renda fixa) e anuidade (parcial da fatura).
+- **Minhas reservas** ([src/domain/reserves.ts](src/domain/reserves.ts)): as reservas do app Santander chegam pelo Open Finance como **CDBs da conexão Santander** (sem o nome dado no app; `reservedBalances` da conta vem nulo). Cada aplicação ativa de renda fixa dessa conexão vira "Reserva N", numerada pela data de aplicação, com taxa, vencimento e carência. Saldos reservados da conta, se vierem, entram com o nome do banco. A posição guarda a conexão de origem em `connection`.
 
 ## 9. Persistência futura (Firebase)
 
 - **Não** configure banco de dados sem pedido explícito.
 - O ponto de troca já existe: a interface `HistoryRepository` ([src/server/repositories/types.ts](src/server/repositories/types.ts)), hoje com uma implementação no-op. O plano completo está em [docs/06-firebase.md](docs/06-firebase.md): Firestore no plano **Spark** via `firebase-admin` nas funções da Vercel. **Não** use Cloud Functions, que exigem o plano Blaze.
-- Itens que dependem do Firebase: histórico de patrimônio, importação do extrato da XP (preço médio exato), marcar um gasto como "não contar no teto" e uma tela de configurações para editar as preferências.
+- Itens que dependem do Firebase: histórico de patrimônio, importação do extrato da XP (preço médio exato), uma tela de configurações para editar as preferências e apelidos para as reservas (o Open Finance não envia o nome).
 
 ## 10. Convenções de código
 

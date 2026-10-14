@@ -32,7 +32,6 @@ export type DailySnapshot = {
   netWorth: number;
   byClass: Partial<Record<AssetClass, number>>;
   checkingBalance: number | null;
-  fortnightSpent: number | null;
 };
 
 /**

@@ -1,7 +1,4 @@
-import type { FinanceConfig } from "@/config/finance";
 import { matchRecurring, type RecurringExpense } from "./recurring";
-import { diffDays } from "@/lib/dates";
-import type { Fortnight } from "./salary";
 import type { ISODate, Transaction, TransactionSource } from "./types";
 
 /** Um gasto pronto para exibição (valor sempre positivo). */
@@ -43,58 +40,6 @@ export function buildExpenses(transactions: Transaction[], recurring: RecurringE
     });
   }
   return out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-}
-
-export type BudgetStatus = "ok" | "warning" | "danger" | "over";
-
-export type FortnightBudget = {
-  limit: number;
-  spent: number;
-  remaining: number;
-  ratio: number;
-  status: BudgetStatus;
-  /** Quanto ainda dá para gastar por dia até o próximo salário. */
-  perDayLeft: number | null;
-  /** Ritmo esperado: % da quinzena já decorrido. */
-  elapsedRatio: number;
-  items: Expense[];
-};
-
-/** Valor que uma compra conta no teto, aplicando a política de parcelamento. */
-function budgetAmount(e: Expense, policy: FinanceConfig["budget"]["installmentPolicy"]): number {
-  if (!e.installment || e.installment.total <= 1) return e.amount;
-  if (e.installment.number !== 1) return 0; // parcelas 2..N não são gasto novo
-  return policy === "full-amount" ? e.amount * e.installment.total : e.amount;
-}
-
-export function fortnightBudget(
-  expenses: Expense[],
-  fortnight: Fortnight,
-  today: ISODate,
-  cfg: FinanceConfig["budget"],
-): FortnightBudget {
-  const items = expenses.filter(
-    (e) => e.variable && e.date >= fortnight.start && e.date < fortnight.end && e.date <= today,
-  );
-  const spent = round2(items.reduce((s, e) => s + budgetAmount(e, cfg.installmentPolicy), 0));
-  const limit = cfg.limitPerFortnight;
-  const remaining = round2(limit - spent);
-  const ratio = limit > 0 ? spent / limit : 0;
-  const status: BudgetStatus =
-    ratio > 1 ? "over" : ratio >= cfg.dangerAt ? "danger" : ratio >= cfg.warnAt ? "warning" : "ok";
-  const daysLeft = fortnight.awaitingSalary ? 1 : Math.max(fortnight.daysLeft, 1);
-  const elapsed = Math.min(Math.max(diffDays(fortnight.start, today) + 1, 0), fortnight.totalDays);
-
-  return {
-    limit,
-    spent,
-    remaining,
-    ratio,
-    status,
-    perDayLeft: remaining > 0 ? round2(remaining / daysLeft) : null,
-    elapsedRatio: elapsed / fortnight.totalDays,
-    items,
-  };
 }
 
 export type CategoryTotal = { category: string; total: number; count: number };

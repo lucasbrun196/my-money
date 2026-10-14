@@ -110,6 +110,13 @@ export type PluggyInvestment = {
   value: number | null;
   date: string | null;
   dueDate: string | null;
+  /** Renda fixa: data da aplicação, fim da carência e remuneração. */
+  purchaseDate?: string | null;
+  issueDate?: string | null;
+  gracePeriodDate?: string | null;
+  rate?: number | null;
+  rateType?: string | null;
+  fixedAnnualRate?: number | null;
   /** Instituição que custodia o investimento (ex.: "BANCO SANTANDER (BRASIL) S.A."). */
   institution?: { name: string | null; number: string | null } | null;
 };

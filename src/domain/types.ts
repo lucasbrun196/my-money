@@ -119,6 +119,8 @@ export type InvestmentPosition = {
   ticker?: string;
   /** Instituição onde o investimento está (Santander, XP...). */
   institution?: string;
+  /** Conexão do Open Finance de onde a posição veio (rótulo do item: "Santander", "XP"). */
+  connection?: string;
   assetClass: AssetClass;
   quantity: number | null;
   avgPrice: number | null;
@@ -131,8 +133,15 @@ export type InvestmentPosition = {
   costCoverage?: number;
   /** Origem do valor: Open Finance (Pluggy) ou cotação atual da B3 (brapi). */
   priceSource: "pluggy" | "brapi" | "demo";
-  /** Tags livres usadas por metas (ex.: "reserva"). */
-  tags?: string[];
+  /** Renda fixa: datas e remuneração, quando o Open Finance informa. */
+  fixedIncome?: {
+    purchaseDate?: ISODate;
+    dueDate?: ISODate;
+    /** Fim da carência: a partir desta data dá para resgatar. */
+    liquidFrom?: ISODate;
+    /** Ex.: "100% do CDI", "12,5% a.a.", "IPCA + 6% a.a." */
+    rateLabel?: string;
+  };
   updatedAt?: string;
 };
 

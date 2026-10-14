@@ -2,8 +2,8 @@ import "server-only";
 import { after } from "next/server";
 import { cache } from "react";
 import { financeConfig } from "@/config/finance";
-import { evaluateGoals } from "@/domain/goals";
 import { computeNetWorth, summarizePortfolio } from "@/domain/portfolio";
+import { summarizeReserves } from "@/domain/reserves";
 import { getRepositories } from "@/server/repositories";
 import { getBankingView } from "./banking";
 import { getCryptoData, getInvestmentsData } from "./data";
@@ -33,7 +33,6 @@ export const getNetWorthView = cache(async () => {
         netWorth: netWorth.total,
         byClass: Object.fromEntries(netWorth.byClass.map((c) => [c.assetClass, c.value])),
         checkingBalance: bank.checking?.balance ?? null,
-        fortnightSpent: bank.hasData ? bank.budget.spent : null,
       }),
     );
   }
@@ -47,11 +46,19 @@ export const getNetWorthView = cache(async () => {
   return { netWorth, sources, missing, fetchedAt: bank.sourced.fetchedAt, today: bank.today };
 });
 
-export const getGoalsView = cache(async () => {
+/** Conexão do Open Finance onde ficam as "Minhas reservas" (rótulo do item, ver repositories/live/investments). */
+const RESERVES_CONNECTION = "Santander";
+
+/** "Minhas reservas" do Santander, deduzidas das aplicações de renda fixa da conexão do banco. */
+export const getReservesView = cache(async () => {
   const [bank, investments] = await Promise.all([getBankingView(), getInvestmentsData()]);
-  return evaluateGoals(financeConfig.goals, {
-    reserved: bank.checking?.reserved ?? null,
-    positions: investments.data,
-    currentBill: bank.hasData && bank.card ? bank.card.currentTotal : null,
-  });
+  return {
+    summary: summarizeReserves({
+      positions: investments.data,
+      connection: RESERVES_CONNECTION,
+      reservedBalances: bank.checking?.reserved,
+    }),
+    sourced: investments,
+    today: bank.today,
+  };
 });

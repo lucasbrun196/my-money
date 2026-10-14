@@ -13,9 +13,3 @@ export const ASSET_CLASS_COLOR: Record<AssetClass, string> = {
   caixa: SERIES[4],
 };
 
-export const STATUS_COLOR = {
-  ok: "#22c55e",
-  warning: "#fab219",
-  danger: "#ec835a",
-  over: "#e5484d",
-} as const;

@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Investimentos" };
 export default function InvestimentosPage() {
   return (
     <>
-      <PageHeader title="Investimentos" description="Indicadores de mercado e posições do Open Finance (XP e Santander)." />
+      <PageHeader kicker="Mercado e carteira" title="Investimentos" description="Indicadores de mercado e posições do Open Finance (XP e Santander)." />
       <div className="space-y-4">
         {/* Cada bloco chega por streaming de forma independente. */}
         <Suspense fallback={<CardSkeleton chart lines={4} />}>
@@ -18,7 +18,7 @@ export default function InvestimentosPage() {
         </Suspense>
         <Suspense
           fallback={
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <CardSkeleton lines={2} className="lg:col-span-2" />
               <CardSkeleton chart />
               <CardSkeleton lines={6} className="lg:col-span-3" />
