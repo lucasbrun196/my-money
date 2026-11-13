@@ -27,7 +27,7 @@ Testes e modo demo usam **dados inventados e genéricos** ("Empresa Exemplo", "F
 
 | Camada | Escolha |
 |---|---|
-| Framework | **Next.js 16.4** (App Router, React 19.3, TypeScript strict), com `cacheComponents: true` e `partialPrefetching: true` |
+| Framework | **Next.js 16.4.6** (App Router, React 19.3, TypeScript strict), com `cacheComponents: true` e `partialPrefetching: true`. As versões 16.0.0 a 16.4.0 têm falhas críticas conhecidas: mantenha o patch em dia (`npm audit`) |
 | Estilo | **Tailwind CSS 4** (tokens em `@theme` no [globals.css](src/app/globals.css)) |
 | Gráficos | **Recharts 3** (não use `<Cell>`, que está obsoleto: passe `fill` em cada item dos dados) |
 | Ícones | `lucide-react` |
